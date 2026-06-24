@@ -1,0 +1,135 @@
+/* stylelint-disable at-rule-no-unknown */
+/* Allow Tailwind directives (processed by PostCSS/Tailwind) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    color-scheme: light;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+    background: #859e87;
+    color: #1f2937;
+}
+
+.app-shell {
+    min-height: 100vh;
+}
+
+.app-sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: #0e1d2f;
+}
+
+.sidebar-brand-icon {
+    width: 46px;
+    height: 46px;
+}
+
+.app-sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.75);
+    transition: all 0.2s ease;
+}
+
+.app-sidebar .nav-link:hover,
+.app-sidebar .nav-link.active {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.app-sidebar .nav-link.active {
+    box-shadow: inset 4px 0 0 #0d6efd;
+}
+
+.topbar {
+    z-index: 1030;
+}
+
+.app-content {
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+.app-footer {
+    background: #ffffff;
+}
+
+.auth-card {
+    border-radius: 1.5rem;
+}
+
+.auth-logo {
+    width: 88px;
+    height: 88px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bg-gradient {
+    background: radial-gradient(circle at top, rgba(13, 110, 253, 0.18), transparent 28%), linear-gradient(180deg, #eef5fe 0%, #f8fbff 100%);
+}
+
+.auth-icon {
+    width: 72px;
+    height: 72px;
+}
+
+.form-control-lg {
+    border-radius: 0.85rem;
+}
+
+.btn-primary {
+    border-radius: 0.85rem;
+}
+
+.card {
+    border-radius: 1.35rem;
+}
+
+.table {
+    border-radius: 1rem;
+}
+
+.table thead th {
+    border-bottom: none;
+}
+
+.table-responsive {
+    overflow: auto;
+}
+
+.table tr:hover {
+    background: rgba(13, 110, 253, 0.04);
+}
+
+.badge {
+    border-radius: 0.85rem;
+    font-size: 0.8rem;
+}
+
+.btn-outline-secondary {
+    border-radius: 0.7rem;
+}
+
+.page-link {
+    border-radius: 0.75rem;
+}
+
+.offcanvas {
+    background: #0e1d2f;
+}
+
+.offcanvas .nav-link {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.offcanvas .nav-link.active {
+    color: #ffffff;
+}
+
+.offcanvas .btn-close-white {
+    filter: invert(1);
+}
