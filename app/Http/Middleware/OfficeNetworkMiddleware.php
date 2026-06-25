@@ -26,11 +26,21 @@ class OfficeNetworkMiddleware
             return $next($request);
         }
 
-        $userIp = $request->ip();
+        // --- TRICK JITU: Membaca IP Asli Tanpa Bergantung pada bootstrap/app.php ---
+        $userIp = $request->header('X-Forwarded-For');
+        if ($userIp) {
+            // X-Forwarded-For biasanya berisi daftar IP (IP_User, Proxy1, Proxy2). 
+            // Kita ambil IP paling pertama karena itu adalah IP Publik asli WiFi kantor kamu.
+            $ips = array_map('trim', explode(',', $userIp));
+            $userIp = $ips[0];
+        } else {
+            $userIp = $request->ip();
+        }
+        // --------------------------------------------------------------------------
 
-        // Cek apakah IP user cocok dengan salah satu IP kantor yang diizinkan
+        // Cek apakah IP asli user cocok dengan salah satu IP kantor yang diizinkan
         if (! $this->isOfficeIp($userIp)) {
-            // Menampilkan pesan error sekaligus menampilkan IP asli yang terbaca oleh server Railway
+            // Menampilkan pesan error sekaligus menampilkan IP asli yang berhasil dibongkar
             return redirect()->back()
                 ->with('error', 'Presensi HADIR hanya dapat dilakukan di kantor. (IP Anda terdeteksi: ' . ($userIp ?? 'Tidak Diketahui') . ')');
         }
@@ -68,7 +78,7 @@ class OfficeNetworkMiddleware
      */
     protected function ipInRange(string $ip, string $range): bool
     {
-        // PERBAIKAN: Jika IP yang didaftarkan di config/Railway adalah IP tunggal (tanpa tanda slash "/"), langsung dicocokkan secara eksak
+        // Jika IP yang didaftarkan adalah IP tunggal (tanpa tanda slash "/"), langsung dicocokkan secara eksak
         if (! str_contains($range, '/')) {
             return $ip === $range;
         }
