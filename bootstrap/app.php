@@ -11,7 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // PERBAIKAN AUDIT: Memaksa Laravel mempercayai proxy load balancer Railway 
+        // agar dapat membaca IP Publik asli dari user (X-Forwarded-For)
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
