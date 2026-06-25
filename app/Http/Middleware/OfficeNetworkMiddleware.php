@@ -21,7 +21,9 @@ class OfficeNetworkMiddleware
             return $next($request);
         }
 
-        if (! $this->isOfficeIp($request->ip())) {
+        $userIp = $request->ip();
+
+        if (! $this->isOfficeIp($userIp)) {
             return redirect()->back()
                 ->with('error', 'Presensi HADIR hanya dapat dilakukan di kantor.');
         }
@@ -47,7 +49,7 @@ class OfficeNetworkMiddleware
     protected function ipInRange(string $ip, string $range): bool
     {
         if (! str_contains($range, '/')) {
-            return false;
+            return $ip === range;
         }
 
         [$subnet, $bits] = explode('/', $range);
