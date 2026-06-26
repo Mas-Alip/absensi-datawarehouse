@@ -22,5 +22,5 @@ return [
     | Jika variabel di Railway kosong, sistem otomatis menggunakan default IP lokal.
     |
     */
-    'office_ip_ranges' => explode(',', env('OFFICE_IP_RANGES', '127.0.0.1,36.68.53.204')),
+    'office_ip_ranges' => explode(',', env('OFFICE_IP_RANGES', '127.0.0.1,36.68.53.204,103.167.156.20,152.233.68.98')),
 ];
