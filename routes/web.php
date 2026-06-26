@@ -78,7 +78,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('pegawai.presensi');
 
     Route::post('/pegawai/presensi/checkin', [PegawaiPresensiController::class, 'checkin'])
-        ->middleware([PegawaiMiddleware::class, \App\Http\Middleware\OfficeNetworkMiddleware::class])
+        ->middleware([PegawaiMiddleware::class])
         ->name('pegawai.presensi.checkin');
 
     Route::post('/pegawai/presensi/checkout', [PegawaiPresensiController::class, 'checkout'])

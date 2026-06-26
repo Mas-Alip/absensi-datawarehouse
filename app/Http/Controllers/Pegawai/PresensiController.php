@@ -73,10 +73,6 @@ class PresensiController extends Controller
         }
 
         if ($jenisPresensi === AttendanceStatus::HADIR) {
-            if (! $this->isOfficeIp($request->ip())) {
-                return redirect()->back()->with('error', 'Presensi HADIR hanya dapat dilakukan di kantor.');
-            }
-
             $jamMasuk = now('Asia/Jakarta');
             $cutoff = $jamMasuk->copy()->setTime(8, 0, 0);
             if ($jamMasuk->greaterThan($cutoff)) {
@@ -102,41 +98,6 @@ class PresensiController extends Controller
         return redirect()->route('pegawai.presensi')->with('success', 'Presensi ' . $jenisPresensi->label() . ' berhasil dicatat.');
     }
 
-    protected function isOfficeIp(?string $ip): bool
-    {
-        if (! $ip) {
-            return false;
-        }
-
-        foreach (config('office.office_ip_ranges', []) as $range) {
-            if ($this->ipInRange($ip, $range)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    protected function ipInRange(string $ip, string $range): bool
-    {
-        if (! str_contains($range, '/')) {
-            return false;
-        }
-
-        [$subnet, $bits] = explode('/', $range);
-
-        $ipLong = ip2long($ip);
-        $subnetLong = ip2long($subnet);
-        $bits = (int) $bits;
-
-        if ($ipLong === false || $subnetLong === false || $bits < 0 || $bits > 32) {
-            return false;
-        }
-
-        $mask = $bits === 0 ? 0 : ~((1 << (32 - $bits)) - 1);
-
-        return ($ipLong & $mask) === ($subnetLong & $mask);
-    }
 
     public function checkout(Request $request): RedirectResponse
     {
