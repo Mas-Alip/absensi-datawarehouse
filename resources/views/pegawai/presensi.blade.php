@@ -102,61 +102,61 @@
             @if(!$todayAttendance)
                 <div id="presensi-options" class="row g-3 mb-3">
                     <div class="col-md-4">
-                    <div class="card border-success rounded-4 h-100">
-                        <div class="card-body d-flex flex-column">
-                            <div class="mb-3">
-                                <span class="badge bg-success">Hadir</span>
+                        <div class="card border-success rounded-4 h-100">
+                            <div class="card-body d-flex flex-column">
+                                <div class="mb-3">
+                                    <span class="badge bg-success">Hadir</span>
+                                </div>
+                                <h5 class="card-title">Presensi Hadir</h5>
+                                <p class="card-text text-muted">Catat kehadiran dengan selfie dan kamera real-time sebelum submit.</p>
+
+                                <form id="hadirForm" action="{{ route('pegawai.presensi.checkin') }}" method="POST" class="mt-auto">
+                                    @csrf
+                                    <input type="hidden" name="jenis_presensi" value="hadir">
+                                    <input type="hidden" id="foto_selfie" name="foto_selfie" value="{{ old('foto_selfie') }}">
+
+                                    <div class="d-grid gap-2 mb-3">
+                                        <button id="openCameraBtn" type="button" class="btn btn-outline-primary">Buka Kamera</button>
+                                        <button id="capturePhotoBtn" type="button" class="btn btn-outline-secondary" disabled>Ambil Foto</button>
+                                        <button id="retakePhotoBtn" type="button" class="btn btn-outline-danger d-none">Ulangi</button>
+                                        <button id="usePhotoBtn" type="button" class="btn btn-success d-none">Gunakan Foto</button>
+                                        <button id="submitHadirBtn" type="submit" class="btn btn-success" disabled>Presensi Hadir</button>
+                                    </div>
+
+                                    <div id="cameraAlert" class="alert alert-info d-none mb-3" role="alert">
+                                        <i class="bi bi-camera-video"></i> <strong>📷 Kamera Aktif</strong> - Pastikan izinkan akses kamera untuk selfie.
+                                    </div>
+
+                                    <div id="cameraPanel" class="card shadow-sm border-0 rounded-4 mb-3 d-none">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center gap-2 mb-3 text-success">
+                                                <i class="bi bi-camera-fill fs-5"></i>
+                                                <span class="fw-semibold">Kamera Aktif</span>
+                                            </div>
+                                            <div class="ratio ratio-4x3 rounded-4 overflow-hidden bg-dark">
+                                                <video id="cameraPreview" class="w-100 h-100" autoplay playsinline muted></video>
+                                            </div>
+                                            <small class="text-muted mt-2 d-block">Preview kamera akan muncul di atas. Tekan Ambil Foto saat siap.</small>
+                                        </div>
+                                    </div>
+
+                                    <div id="photoPreviewPanel" class="card shadow-sm border-0 rounded-4 mb-3 d-none">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
+                                                <i class="bi bi-camera-reels fs-5"></i>
+                                                <span class="fw-semibold">Preview Selfie</span>
+                                            </div>
+                                            <div class="ratio ratio-4x3 rounded-4 overflow-hidden bg-secondary">
+                                                <img id="capturedPhotoPreview" src="" alt="Preview Selfie" class="w-100 h-100 object-fit-cover">
+                                            </div>
+                                            <small class="text-muted mt-2 d-block">Jika sudah cocok, tekan Gunakan Foto untuk mengunci selfie.</small>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
-                            <h5 class="card-title">Presensi Hadir</h5>
-                            <p class="card-text text-muted">Catat kehadiran dengan selfie dan kamera real-time sebelum submit.</p>
-
-                            <form id="hadirForm" action="{{ route('pegawai.presensi.checkin') }}" method="POST" class="mt-auto">
-                                @csrf
-                                <input type="hidden" name="jenis_presensi" value="hadir">
-                                <input type="hidden" id="foto_selfie" name="foto_selfie" value="{{ old('foto_selfie') }}">
-
-                                <div class="d-grid gap-2 mb-3">
-                                    <button id="openCameraBtn" type="button" class="btn btn-outline-primary">Buka Kamera</button>
-                                    <button id="capturePhotoBtn" type="button" class="btn btn-outline-secondary" disabled>Ambil Foto</button>
-                                    <button id="retakePhotoBtn" type="button" class="btn btn-outline-danger d-none">Ulangi</button>
-                                    <button id="usePhotoBtn" type="button" class="btn btn-success d-none">Gunakan Foto</button>
-                                    <button id="submitHadirBtn" type="submit" class="btn btn-success" disabled>Presensi Hadir</button>
-                                </div>
-
-                                <div id="cameraAlert" class="alert alert-info d-none mb-3" role="alert">
-                                    <i class="bi bi-camera-video"></i> <strong>📷 Kamera Aktif</strong> - Pastikan izinkan akses kamera untuk selfie.
-                                </div>
-
-                                <div id="cameraPanel" class="card shadow-sm border-0 rounded-4 mb-3 d-none">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center gap-2 mb-3 text-success">
-                                            <i class="bi bi-camera-fill fs-5"></i>
-                                            <span class="fw-semibold">Kamera Aktif</span>
-                                        </div>
-                                        <div class="ratio ratio-4x3 rounded-4 overflow-hidden bg-dark">
-                                            <video id="cameraPreview" class="w-100 h-100" autoplay playsinline muted></video>
-                                        </div>
-                                        <small class="text-muted mt-2 d-block">Preview kamera akan muncul di atas. Tekan Ambil Foto saat siap.</small>
-                                    </div>
-                                </div>
-
-                                <div id="photoPreviewPanel" class="card shadow-sm border-0 rounded-4 mb-3 d-none">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
-                                            <i class="bi bi-camera-reels fs-5"></i>
-                                            <span class="fw-semibold">Preview Selfie</span>
-                                        </div>
-                                        <div class="ratio ratio-4x3 rounded-4 overflow-hidden bg-secondary">
-                                            <img id="capturedPhotoPreview" src="" alt="Preview Selfie" class="w-100 h-100 object-fit-cover">
-                                        </div>
-                                        <small class="text-muted mt-2 d-block">Jika sudah cocok, tekan Gunakan Foto untuk mengunci selfie.</small>
-                                    </div>
-                                </div>
-                            </form>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4">
+                    <div class="col-md-4">
                         <div class="card border-info rounded-4 h-100">
                             <div class="card-body d-flex flex-column">
                                 <div class="mb-3">
