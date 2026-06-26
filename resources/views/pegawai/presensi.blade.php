@@ -102,22 +102,61 @@
             @if(!$todayAttendance)
                 <div id="presensi-options" class="row g-3 mb-3">
                     <div class="col-md-4">
-                        <div class="card border-success rounded-4 h-100">
-                            <div class="card-body d-flex flex-column">
-                                <div class="mb-3">
-                                    <span class="badge bg-success">Hadir</span>
-                                </div>
-                                <h5 class="card-title">Presensi Hadir</h5>
-                                <p class="card-text text-muted">Catat kehadiran dengan jam masuk sekarang.</p>
-                                <form action="{{ route('pegawai.presensi.checkin') }}" method="POST" class="mt-auto">
-                                    @csrf
-                                    <input type="hidden" name="jenis_presensi" value="hadir">
-                                    <button type="submit" class="btn btn-success w-100">Pilih Hadir</button>
-                                </form>
+                    <div class="card border-success rounded-4 h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-3">
+                                <span class="badge bg-success">Hadir</span>
                             </div>
+                            <h5 class="card-title">Presensi Hadir</h5>
+                            <p class="card-text text-muted">Catat kehadiran dengan selfie dan kamera real-time sebelum submit.</p>
+
+                            <form id="hadirForm" action="{{ route('pegawai.presensi.checkin') }}" method="POST" class="mt-auto">
+                                @csrf
+                                <input type="hidden" name="jenis_presensi" value="hadir">
+                                <input type="hidden" id="foto_selfie" name="foto_selfie" value="{{ old('foto_selfie') }}">
+
+                                <div class="d-grid gap-2 mb-3">
+                                    <button id="openCameraBtn" type="button" class="btn btn-outline-primary">Buka Kamera</button>
+                                    <button id="capturePhotoBtn" type="button" class="btn btn-outline-secondary" disabled>Ambil Foto</button>
+                                    <button id="retakePhotoBtn" type="button" class="btn btn-outline-danger d-none">Ulangi</button>
+                                    <button id="usePhotoBtn" type="button" class="btn btn-success d-none">Gunakan Foto</button>
+                                    <button id="submitHadirBtn" type="submit" class="btn btn-success" disabled>Presensi Hadir</button>
+                                </div>
+
+                                <div id="cameraAlert" class="alert alert-info d-none mb-3" role="alert">
+                                    <i class="bi bi-camera-video"></i> <strong>📷 Kamera Aktif</strong> - Pastikan izinkan akses kamera untuk selfie.
+                                </div>
+
+                                <div id="cameraPanel" class="card shadow-sm border-0 rounded-4 mb-3 d-none">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center gap-2 mb-3 text-success">
+                                            <i class="bi bi-camera-fill fs-5"></i>
+                                            <span class="fw-semibold">Kamera Aktif</span>
+                                        </div>
+                                        <div class="ratio ratio-4x3 rounded-4 overflow-hidden bg-dark">
+                                            <video id="cameraPreview" class="w-100 h-100" autoplay playsinline muted></video>
+                                        </div>
+                                        <small class="text-muted mt-2 d-block">Preview kamera akan muncul di atas. Tekan Ambil Foto saat siap.</small>
+                                    </div>
+                                </div>
+
+                                <div id="photoPreviewPanel" class="card shadow-sm border-0 rounded-4 mb-3 d-none">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
+                                            <i class="bi bi-camera-reels fs-5"></i>
+                                            <span class="fw-semibold">Preview Selfie</span>
+                                        </div>
+                                        <div class="ratio ratio-4x3 rounded-4 overflow-hidden bg-secondary">
+                                            <img id="capturedPhotoPreview" src="" alt="Preview Selfie" class="w-100 h-100 object-fit-cover">
+                                        </div>
+                                        <small class="text-muted mt-2 d-block">Jika sudah cocok, tekan Gunakan Foto untuk mengunci selfie.</small>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                </div>
+                <div class="col-md-4">
                         <div class="card border-info rounded-4 h-100">
                             <div class="card-body d-flex flex-column">
                                 <div class="mb-3">
@@ -239,6 +278,8 @@
                 </div>
             @endif
 
+            </div>
+
             <div class="card shadow-sm border-0 rounded-4 mt-3">
                 <div class="card-body">
                     <h5 class="card-title">Riwayat 10 Presensi Terakhir</h5>
@@ -283,4 +324,161 @@
         </div>
     </div>
 </div>
-@endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const openCameraBtn = document.getElementById('openCameraBtn');
+    const capturePhotoBtn = document.getElementById('capturePhotoBtn');
+    const retakePhotoBtn = document.getElementById('retakePhotoBtn');
+    const usePhotoBtn = document.getElementById('usePhotoBtn');
+    const submitHadirBtn = document.getElementById('submitHadirBtn');
+    const cameraPanel = document.getElementById('cameraPanel');
+    const cameraAlert = document.getElementById('cameraAlert');
+    const photoPreviewPanel = document.getElementById('photoPreviewPanel');
+    const cameraPreview = document.getElementById('cameraPreview');
+    const capturedPhotoPreview = document.getElementById('capturedPhotoPreview');
+    const fotoSelfieInput = document.getElementById('foto_selfie');
+
+    let mediaStream = null;
+    let latestPhotoData = '';
+
+    function show(element, visible) {
+        if (!element) return;
+        element.classList.toggle('d-none', !visible);
+    }
+
+    function enable(button, enabled) {
+        if (!button) return;
+        button.disabled = !enabled;
+    }
+
+    function stopCamera() {
+        if (!mediaStream) return;
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+        if (cameraPreview) {
+            cameraPreview.srcObject = null;
+        }
+    }
+
+    function resetPreview() {
+        latestPhotoData = '';
+        if (capturedPhotoPreview) {
+            capturedPhotoPreview.src = '';
+        }
+        if (fotoSelfieInput) {
+            fotoSelfieInput.value = '';
+        }
+        show(photoPreviewPanel, false);
+        show(usePhotoBtn, false);
+        show(retakePhotoBtn, false);
+        enable(submitHadirBtn, false);
+    }
+
+    function openCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('Browser Anda tidak mendukung akses kamera.');
+            return;
+        }
+
+        const constraints = {
+            video: { facingMode: { exact: 'user' } },
+            audio: false,
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .catch(() => navigator.mediaDevices.getUserMedia({ video: true, audio: false }))
+            .then(stream => {
+                mediaStream = stream;
+                if (cameraPreview) {
+                    cameraPreview.srcObject = stream;
+                    cameraPreview.play().catch(() => {});
+                }
+                show(cameraPanel, true);
+                show(cameraAlert, true);
+                enable(capturePhotoBtn, true);
+                enable(openCameraBtn, false);
+            })
+            .catch(() => {
+                alert('Tidak dapat mengakses kamera. Periksa izin kamera dan coba lagi.');
+            });
+    }
+
+    function capturePhoto() {
+        if (!mediaStream || !cameraPreview || !cameraPreview.videoWidth || !cameraPreview.videoHeight) {
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = cameraPreview.videoWidth;
+        canvas.height = cameraPreview.videoHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+        latestPhotoData = canvas.toDataURL('image/jpeg', 0.92);
+
+        if (capturedPhotoPreview) {
+            capturedPhotoPreview.src = latestPhotoData;
+        }
+
+        show(photoPreviewPanel, true);
+        show(usePhotoBtn, true);
+        show(retakePhotoBtn, true);
+        enable(capturePhotoBtn, false);
+    }
+
+    function usePhoto() {
+        if (!latestPhotoData || !fotoSelfieInput) {
+            return;
+        }
+
+        fotoSelfieInput.value = latestPhotoData;
+        show(cameraPanel, false);
+        show(cameraAlert, false);
+        enable(submitHadirBtn, true);
+        enable(openCameraBtn, false);
+        enable(capturePhotoBtn, false);
+    }
+
+    function retakePhoto() {
+        resetPreview();
+        if (mediaStream) {
+            show(cameraPanel, true);
+            show(cameraAlert, true);
+            enable(capturePhotoBtn, true);
+            enable(openCameraBtn, false);
+        } else {
+            openCamera();
+        }
+    }
+
+    if (openCameraBtn) {
+        openCameraBtn.addEventListener('click', function () {
+            resetPreview();
+            openCamera();
+        });
+    }
+
+    if (capturePhotoBtn) {
+        capturePhotoBtn.addEventListener('click', function () {
+            capturePhoto();
+        });
+    }
+
+    if (usePhotoBtn) {
+        usePhotoBtn.addEventListener('click', function () {
+            usePhoto();
+            stopCamera();
+        });
+    }
+
+    if (retakePhotoBtn) {
+        retakePhotoBtn.addEventListener('click', function () {
+            retakePhoto();
+        });
+    }
+
+    window.addEventListener('beforeunload', stopCamera);
+});
+</script>
+@endpush
