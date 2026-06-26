@@ -14,7 +14,21 @@ class Absensi extends Model
     protected $table = 'absensi';
 
     protected $fillable = [
-        'pegawai_id', 'tanggal', 'jam_masuk', 'jam_keluar', 'status_kehadiran', 'status_keterlambatan', 'menit_terlambat', 'keterangan', 'bukti_file'
+        'pegawai_id',
+        'tanggal',
+        'jam_masuk',
+        'jam_keluar',
+        'status_kehadiran',
+        'status_keterlambatan',
+        'menit_terlambat',
+        'keterangan',
+        'bukti_file',
+        'foto_selfie',
+        'latitude',
+        'longitude',
+        'alamat',
+        'device',
+        'browser',
     ];
 
     protected $casts = [
@@ -22,6 +36,8 @@ class Absensi extends Model
         'status_kehadiran' => AttendanceStatus::class,
         'status_keterlambatan' => LateStatus::class,
         'menit_terlambat' => 'integer',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
     ];
 
     public function pegawai()
