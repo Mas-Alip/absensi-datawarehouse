@@ -26,7 +26,9 @@ class OfficeNetworkMiddleware
             return $next($request);
         }
 
-        $userIp = $request->ip();
+        $userIp = $request->header('CF-Connecting-IP')
+            ?? $request->header('X-Forwarded-For')
+            ?? $request->ip();
 
         // Cek apakah IP user cocok dengan salah satu IP kantor yang diizinkan
         if (! $this->isOfficeIp($userIp)) {
