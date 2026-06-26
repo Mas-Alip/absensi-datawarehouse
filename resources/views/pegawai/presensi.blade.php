@@ -114,6 +114,8 @@
                                     @csrf
                                     <input type="hidden" name="jenis_presensi" value="hadir">
                                     <input type="hidden" id="foto_selfie" name="foto_selfie" value="{{ old('foto_selfie') }}">
+                                    <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude') }}">
+                                    <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude') }}">
 
                                     <div class="d-grid gap-2 mb-3">
                                         <button id="openCameraBtn" type="button" class="btn btn-outline-primary">Buka Kamera</button>
@@ -121,6 +123,24 @@
                                         <button id="retakePhotoBtn" type="button" class="btn btn-outline-danger d-none">Ulangi</button>
                                         <button id="usePhotoBtn" type="button" class="btn btn-success d-none">Gunakan Foto</button>
                                         <button id="submitHadirBtn" type="submit" class="btn btn-success" disabled>Presensi Hadir</button>
+                                    </div>
+
+                                    <div id="gpsStatus" class="alert alert-danger d-flex align-items-start gap-2 mb-3" role="alert">
+                                        <i class="bi bi-geo-alt-fill fs-5 mt-1"></i>
+                                        <div>
+                                            <strong>📍 Status GPS</strong>
+                                            <div id="gpsStatusText" class="small">Lokasi belum diperoleh</div>
+                                        </div>
+                                    </div>
+
+                                    <div id="gpsInfo" class="small text-muted mb-3 d-none">
+                                        <div>Latitude: <span id="gpsLatitude">-</span></div>
+                                        <div>Longitude: <span id="gpsLongitude">-</span></div>
+                                        <div>Akurasi GPS: <span id="gpsAccuracy">-</span> meter</div>
+                                    </div>
+
+                                    <div id="gpsErrorAlert" class="alert alert-danger d-none mb-3" role="alert">
+                                        GPS wajib diaktifkan untuk melakukan Presensi Hadir.
                                     </div>
 
                                     <div id="cameraAlert" class="alert alert-info d-none mb-3" role="alert">
@@ -278,8 +298,6 @@
                 </div>
             @endif
 
-            </div>
-
             <div class="card shadow-sm border-0 rounded-4 mt-3">
                 <div class="card-body">
                     <h5 class="card-title">Riwayat 10 Presensi Terakhir</h5>
@@ -339,9 +357,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const cameraPreview = document.getElementById('cameraPreview');
     const capturedPhotoPreview = document.getElementById('capturedPhotoPreview');
     const fotoSelfieInput = document.getElementById('foto_selfie');
+    const latitudeInput = document.getElementById('latitude');
+    const longitudeInput = document.getElementById('longitude');
+    const gpsStatus = document.getElementById('gpsStatus');
+    const gpsStatusText = document.getElementById('gpsStatusText');
+    const gpsInfo = document.getElementById('gpsInfo');
+    const gpsLatitude = document.getElementById('gpsLatitude');
+    const gpsLongitude = document.getElementById('gpsLongitude');
+    const gpsAccuracy = document.getElementById('gpsAccuracy');
+    const gpsErrorAlert = document.getElementById('gpsErrorAlert');
 
     let mediaStream = null;
     let latestPhotoData = '';
+    let locationAcquired = false;
+    let photoCaptured = false;
 
     function show(element, visible) {
         if (!element) return;
@@ -362,8 +391,34 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function setGpsStatus(success) {
+        if (!gpsStatus || !gpsStatusText) return;
+        gpsStatus.classList.toggle('alert-danger', !success);
+        gpsStatus.classList.toggle('alert-success', success);
+        gpsStatusText.textContent = success ? 'Lokasi berhasil diperoleh' : 'Lokasi belum diperoleh';
+
+        if (!success) {
+            show(gpsInfo, false);
+            if (gpsLatitude) gpsLatitude.textContent = '-';
+            if (gpsLongitude) gpsLongitude.textContent = '-';
+            if (gpsAccuracy) gpsAccuracy.textContent = '-';
+        }
+    }
+
+    function showGpsError(message) {
+        if (!gpsErrorAlert) return;
+        gpsErrorAlert.textContent = message;
+        show(gpsErrorAlert, true);
+    }
+
+    function updateSubmitState() {
+        const shouldEnable = locationAcquired && photoCaptured;
+        enable(submitHadirBtn, shouldEnable);
+    }
+
     function resetPreview() {
         latestPhotoData = '';
+        photoCaptured = false;
         if (capturedPhotoPreview) {
             capturedPhotoPreview.src = '';
         }
@@ -373,10 +428,54 @@ document.addEventListener('DOMContentLoaded', function () {
         show(photoPreviewPanel, false);
         show(usePhotoBtn, false);
         show(retakePhotoBtn, false);
-        enable(submitHadirBtn, false);
+        show(gpsErrorAlert, false);
+        setGpsStatus(false);
+        locationAcquired = false;
+        if (latitudeInput) latitudeInput.value = '';
+        if (longitudeInput) longitudeInput.value = '';
+        updateSubmitState();
+    }
+
+    function requestLocation() {
+        if (!navigator.geolocation) {
+            showGpsError('GPS tidak tersedia di browser Anda.');
+            setGpsStatus(false);
+            return;
+        }
+
+        show(gpsErrorAlert, false);
+        setGpsStatus(false);
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude, accuracy } = position.coords;
+                locationAcquired = true;
+                if (latitudeInput) latitudeInput.value = latitude;
+                if (longitudeInput) longitudeInput.value = longitude;
+                if (gpsLatitude) gpsLatitude.textContent = latitude.toFixed(7);
+                if (gpsLongitude) gpsLongitude.textContent = longitude.toFixed(7);
+                if (gpsAccuracy) gpsAccuracy.textContent = accuracy.toFixed(1);
+                show(gpsInfo, true);
+                setGpsStatus(true);
+                updateSubmitState();
+            },
+            (error) => {
+                locationAcquired = false;
+                setGpsStatus(false);
+                showGpsError('GPS wajib diaktifkan untuk melakukan Presensi Hadir.');
+                updateSubmitState();
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0,
+            }
+        );
     }
 
     function openCamera() {
+        requestLocation();
+
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             alert('Browser Anda tidak mendukung akses kamera.');
             return;
@@ -433,9 +532,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         fotoSelfieInput.value = latestPhotoData;
+        photoCaptured = true;
         show(cameraPanel, false);
         show(cameraAlert, false);
-        enable(submitHadirBtn, true);
+        updateSubmitState();
         enable(openCameraBtn, false);
         enable(capturePhotoBtn, false);
     }
