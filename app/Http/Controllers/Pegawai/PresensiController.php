@@ -168,17 +168,43 @@ class PresensiController extends Controller
         $filename = 'selfie_' . now('Asia/Jakarta')->format('Ymd_His') . '_' . uniqid() . '.jpg';
         $path = 'selfie-presensi/' . $filename;
         $disk = Storage::disk('public');
-        $disk->makeDirectory('selfie-presensi');
+        $rootPath = $disk->path('');
+
+        $created = $disk->makeDirectory('selfie-presensi', 0755, true);
         Log::info('saveSelfieFromBase64 ensured directory exists', [
             'directory' => 'selfie-presensi',
-            'disk_root' => $disk->path(''),
+            'created' => $created,
+            'disk_root' => $rootPath,
         ]);
 
-        $stored = $disk->put($path, $decoded);
-        Log::info('saveSelfieFromBase64 storage put result', [
-            'path' => $path,
-            'stored' => $stored,
-        ]);
+        $stored = false;
+        try {
+            $stored = $disk->put($path, $decoded);
+        } catch (\Throwable $e) {
+            Log::error('saveSelfieFromBase64 put exception', [
+                'path' => $path,
+                'exception' => $e->getMessage(),
+                'exception_file' => $e->getFile(),
+                'exception_line' => $e->getLine(),
+            ]);
+        }
+
+        if (! $stored) {
+            $absolutePath = rtrim($rootPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $path;
+            $folder = dirname($absolutePath);
+            if (! is_dir($folder)) {
+                mkdir($folder, 0755, true);
+            }
+            $stored = file_put_contents($absolutePath, $decoded) !== false;
+            if ($stored) {
+                $disk->setVisibility($path, 'public');
+            }
+            Log::warning('saveSelfieFromBase64 fallback native write', [
+                'path' => $path,
+                'absolute_path' => $absolutePath,
+                'stored' => $stored,
+            ]);
+        }
 
         $exists = $disk->exists($path);
         $absolutePath = $disk->path($path);
