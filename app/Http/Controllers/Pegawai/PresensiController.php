@@ -9,6 +9,7 @@ use App\Http\Requests\StorePresensiRequest;
 use App\Models\Absensi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Carbon\Carbon;
@@ -88,7 +89,24 @@ class PresensiController extends Controller
                 $statusKeterlambatan = LateStatus::ON_TIME;
             }
 
+            Log::info('Presensi hadir: mulai proses upload selfie', [
+                'pegawai_id' => $pegawai->id,
+                'today' => $today,
+                'foto_selfie_present' => isset($validated['foto_selfie']),
+                'foto_selfie_length' => isset($validated['foto_selfie']) ? strlen($validated['foto_selfie']) : 0,
+            ]);
+
             $fotoSelfiePath = $this->saveSelfieFromBase64($validated['foto_selfie'] ?? null);
+            if (! $fotoSelfiePath) {
+                Log::error('Presensi hadir gagal: file selfie tidak tersimpan', [
+                    'pegawai_id' => $pegawai->id,
+                    'today' => $today,
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                ]);
+                return redirect()->route('pegawai.presensi')->with('error', 'Gagal menyimpan foto selfie. Silakan ulangi presensi.');
+            }
+
             if ($latitude !== null && $longitude !== null) {
                 $alamat = $this->buildLocationLink($latitude, $longitude);
             }
@@ -114,19 +132,71 @@ class PresensiController extends Controller
 
     private function saveSelfieFromBase64(?string $dataUrl): ?string
     {
+        Log::info('saveSelfieFromBase64 called', [
+            'data_url_present' => ! empty($dataUrl),
+            'data_url_type' => is_string($dataUrl) ? gettype($dataUrl) : null,
+        ]);
+
         if (! $dataUrl || ! str_contains($dataUrl, 'base64,')) {
+            Log::warning('saveSelfieFromBase64 invalid payload', [
+                'data_url' => $dataUrl,
+            ]);
             return null;
         }
 
         [$meta, $encoded] = explode('base64,', $dataUrl, 2);
-        $decoded = base64_decode($encoded);
+        $encodedLength = strlen($encoded);
+        Log::info('saveSelfieFromBase64 parsed base64', [
+            'meta' => $meta,
+            'encoded_length' => $encodedLength,
+        ]);
+
+        $decoded = base64_decode($encoded, true);
         if ($decoded === false) {
+            Log::error('saveSelfieFromBase64 base64_decode failed', [
+                'meta' => $meta,
+                'encoded_length' => $encodedLength,
+            ]);
             return null;
         }
 
+        $decodedSize = strlen($decoded);
+        Log::info('saveSelfieFromBase64 decoded file', [
+            'decoded_size' => $decodedSize,
+        ]);
+
         $filename = 'selfie_' . now('Asia/Jakarta')->format('Ymd_His') . '_' . uniqid() . '.jpg';
         $path = 'selfie-presensi/' . $filename;
-        Storage::disk('public')->put($path, $decoded);
+        $disk = Storage::disk('public');
+        $disk->makeDirectory('selfie-presensi');
+        Log::info('saveSelfieFromBase64 ensured directory exists', [
+            'directory' => 'selfie-presensi',
+            'disk_root' => $disk->path(''),
+        ]);
+
+        $stored = $disk->put($path, $decoded);
+        Log::info('saveSelfieFromBase64 storage put result', [
+            'path' => $path,
+            'stored' => $stored,
+        ]);
+
+        $exists = $disk->exists($path);
+        $absolutePath = $disk->path($path);
+        Log::info('saveSelfieFromBase64 storage exists check', [
+            'path' => $path,
+            'exists' => $exists,
+            'absolute_path' => $absolutePath,
+        ]);
+
+        if (! $stored || ! $exists) {
+            Log::error('saveSelfieFromBase64 upload verification failed', [
+                'path' => $path,
+                'stored' => $stored,
+                'exists' => $exists,
+                'absolute_path' => $absolutePath,
+            ]);
+            return null;
+        }
 
         return $path;
     }
