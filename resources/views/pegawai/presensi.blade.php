@@ -202,7 +202,7 @@
                                 </div>
                                 <h5 class="card-title">Presensi Izin</h5>
                                 <p class="card-text text-muted">Ajukan izin dengan keterangan dan bukti pendukung.</p>
-                                <button class="btn btn-outline-info w-100 mt-auto" type="button" data-bs-toggle="collapse" data-bs-target="#izinForm" aria-expanded="false" aria-controls="izinForm">Pilih Izin</button>
+                                <button id="toggleIzinBtn" class="btn btn-outline-info w-100 mt-auto" type="button">Pilih Izin</button>
                             </div>
                         </div>
                     </div>
@@ -214,7 +214,7 @@
                                 </div>
                                 <h5 class="card-title">Presensi Sakit</h5>
                                 <p class="card-text text-muted">Laporkan sakit dengan keterangan dan bukti medis.</p>
-                                <button class="btn btn-outline-warning w-100 mt-auto" type="button" data-bs-toggle="collapse" data-bs-target="#sakitForm" aria-expanded="false" aria-controls="sakitForm">Pilih Sakit</button>
+                                <button id="toggleSakitBtn" class="btn btn-outline-warning w-100 mt-auto" type="button">Pilih Sakit</button>
                             </div>
                         </div>
                     </div>
@@ -594,6 +594,35 @@ document.addEventListener('DOMContentLoaded', function () {
         retakePhotoBtn.addEventListener('click', function () {
             retakePhoto();
         });
+    }
+    // Controlled collapse toggles (workaround for unexpected immediate close)
+    const toggleIzinBtn = document.getElementById('toggleIzinBtn');
+    const toggleSakitBtn = document.getElementById('toggleSakitBtn');
+    const izinEl = document.getElementById('izinForm');
+    const sakitEl = document.getElementById('sakitForm');
+
+    try {
+        if (typeof bootstrap !== 'undefined') {
+            const izinCollapse = izinEl ? bootstrap.Collapse.getOrCreateInstance(izinEl, { toggle: false }) : null;
+            const sakitCollapse = sakitEl ? bootstrap.Collapse.getOrCreateInstance(sakitEl, { toggle: false }) : null;
+
+            if (toggleIzinBtn && izinCollapse) {
+                toggleIzinBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    izinCollapse.toggle();
+                });
+            }
+
+            if (toggleSakitBtn && sakitCollapse) {
+                toggleSakitBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    sakitCollapse.toggle();
+                });
+            }
+        }
+    } catch (err) {
+        // fail silently; keep original behavior if bootstrap not present
+        console.warn('Collapse init error', err);
     }
 
     window.addEventListener('beforeunload', stopCamera);

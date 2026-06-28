@@ -135,6 +135,10 @@ class WarehouseEtlService
                     'total_izin' => 0,
                     'total_sakit' => 0,
                     'total_alfa' => 0,
+                    'selfie_path' => null,
+                    'latitude' => null,
+                    'longitude' => null,
+                    'google_maps_url' => null,
                 ];
             }
 
@@ -146,6 +150,20 @@ class WarehouseEtlService
 
                 if ($record->foto_selfie && $record->latitude && $record->longitude) {
                     $factGroups[$key]['total_smart_hadir']++;
+                }
+
+                // Capture representative selfie and GPS for the fact row (first non-null)
+                if (! $factGroups[$key]['selfie_path'] && $record->foto_selfie) {
+                    $factGroups[$key]['selfie_path'] = $record->foto_selfie;
+                }
+                if (! $factGroups[$key]['latitude'] && $record->latitude) {
+                    $factGroups[$key]['latitude'] = $record->latitude;
+                }
+                if (! $factGroups[$key]['longitude'] && $record->longitude) {
+                    $factGroups[$key]['longitude'] = $record->longitude;
+                }
+                if (! $factGroups[$key]['google_maps_url'] && $record->latitude && $record->longitude) {
+                    $factGroups[$key]['google_maps_url'] = sprintf('https://www.google.com/maps/search/?api=1&query=%s,%s', $record->latitude, $record->longitude);
                 }
             }
             if ($status === 'izin') {
@@ -193,6 +211,10 @@ class WarehouseEtlService
                     'total_izin' => $group['total_izin'],
                     'total_sakit' => $group['total_sakit'],
                     'total_alfa' => $group['total_alfa'],
+                    'selfie_path' => $group['selfie_path'] ?? null,
+                    'latitude' => $group['latitude'] ?? null,
+                    'longitude' => $group['longitude'] ?? null,
+                    'google_maps_url' => $group['google_maps_url'] ?? null,
                 ]
             );
         }

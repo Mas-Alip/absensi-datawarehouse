@@ -96,8 +96,22 @@ class ManagerAnalyticsService
             ->selectRaw('COUNT(DISTINCT pegawai_id) as pegawai_terlambat, COALESCE(SUM(menit_terlambat), 0) as total_menit_terlambat')
             ->first();
 
+        // Additional manager-focused metrics
+        $today = Carbon::today();
+        $todayPresentCount = Absensi::whereDate('tanggal', $today)->count();
+        $todayLateCount = Absensi::whereDate('tanggal', $today)->where('status_keterlambatan', LateStatus::LATE->value)->count();
+
+        // Recent presensi details for manager view (within the requested range)
+        $recentPresensi = Absensi::with('pegawai')
+            ->whereBetween('tanggal', $dateRange)
+            ->orderByDesc('tanggal')
+            ->limit(10)
+            ->get();
+
         return [
             'summary' => $summary,
+            'todayPresentCount' => $todayPresentCount,
+            'todayLateCount' => $todayLateCount,
             'totalPegawai' => $totalPegawai,
             'totalDivisi' => $totalDivisi,
             'totalJabatan' => $totalJabatan,
@@ -109,6 +123,7 @@ class ManagerAnalyticsService
             'factTotalRecords' => $totalDataAbsensi,
             'distinctDates' => (clone $baseQuery)->distinct()->count('dim_waktu.tanggal'),
             'lateSummary' => $lateSummary,
+            'recentPresensi' => $recentPresensi,
         ];
     }
 

@@ -45,13 +45,16 @@
 
 <div class="card">
     <div class="card-body">
-        <div class="table-responsive">
+        <div class="table-responsive overflow-x-auto">
             <table class="table table-striped table-hover align-middle">
                 <thead>
                     <tr>
                         <th style="width: 60px;">#</th>
                         <th>Tanggal</th>
                         <th>Pegawai</th>
+                        <th>Bukti Selfie</th>
+                        <th>Lokasi GPS</th>
+                        <th>Google Maps</th>
                         <th>Jam Masuk</th>
                         <th>Jam Keluar</th>
                         <th>Status Kehadiran</th>
@@ -70,6 +73,29 @@
                             <td>{{ $absensi->firstItem() + $loop->index }}</td>
                             <td>{{ $item->tanggal?->format('Y-m-d') }}</td>
                             <td>{{ $item->pegawai?->nip }} - {{ $item->pegawai?->nama }}</td>
+                            <td>
+                                @if($item->foto_selfie)
+                                    <a href="{{ asset('storage/' . $item->foto_selfie) }}" target="_blank">
+                                        <img src="{{ asset('storage/' . $item->foto_selfie) }}" alt="Selfie" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
+                                    </a>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>
+                                @if($item->latitude && $item->longitude)
+                                    {{ number_format($item->latitude, 7) }}, {{ number_format($item->longitude, 7) }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>
+                                @if($item->latitude && $item->longitude)
+                                    <a href="https://maps.google.com/?q={{ $item->latitude }},{{ $item->longitude }}" target="_blank" class="btn btn-sm btn-outline-primary">Lihat Lokasi</a>
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td>{{ $item->jam_masuk ?? '-' }}</td>
                             <td>{{ $item->jam_keluar ?? '-' }}</td>
                             <td>

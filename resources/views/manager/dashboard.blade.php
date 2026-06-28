@@ -16,6 +16,65 @@
                         <i class="bi bi-printer me-2"></i>Export PDF
                     </a>
                 </div>
+    <div class="row g-3 mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 px-4 py-3">
+                    <h5 class="mb-0">Riwayat Presensi (Terbaru)</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive overflow-x-auto">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Pegawai</th>
+                                    <th>Status</th>
+                                    <th>Jam Masuk</th>
+                                    <th>Selfie</th>
+                                    <th>Lokasi</th>
+                                    <th>Maps</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($recentPresensi as $p)
+                                    <tr>
+                                        <td>{{ $p->tanggal?->format('Y-m-d') }}</td>
+                                        <td>{{ $p->pegawai?->nama }}</td>
+                                        <td>{{ $p->status_kehadiran?->label() ?? ucfirst($p->status_kehadiran ?? '-') }}</td>
+                                        <td>{{ $p->jam_masuk ?? '-' }}</td>
+                                        <td>
+                                            @if($p->foto_selfie)
+                                                <a href="{{ asset('storage/' . $p->foto_selfie) }}" target="_blank">
+                                                    <img src="{{ asset('storage/' . $p->foto_selfie) }}" alt="Selfie" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
+                                                </a>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($p->latitude && $p->longitude)
+                                                {{ number_format($p->latitude, 7) }}, {{ number_format($p->longitude, 7) }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($p->latitude && $p->longitude)
+                                                <a href="https://maps.google.com/?q={{ $p->latitude }},{{ $p->longitude }}" target="_blank" class="btn btn-sm btn-outline-primary">Lihat Lokasi</a>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
             </div>
         </div>
     </div>
@@ -242,6 +301,38 @@
                     </div>
                 </div>
             </div>
+        <div class="col-sm-6 col-xl-2">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-primary rounded-circle p-3 me-3">
+                            <i class="bi bi-list-check fs-4"></i>
+                        </span>
+                        <div>
+                            <h6 class="mb-1 text-uppercase text-muted">Presensi Hari Ini</h6>
+                            <h3 class="mb-0">{{ number_format($todayPresentCount ?? 0) }}</h3>
+                        </div>
+                    </div>
+                    <p class="mb-0 text-muted">Jumlah presensi yang tercatat hari ini.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-2">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-danger rounded-circle p-3 me-3">
+                            <i class="bi bi-exclamation-circle fs-4"></i>
+                        </span>
+                        <div>
+                            <h6 class="mb-1 text-uppercase text-muted">Jumlah Terlambat</h6>
+                            <h3 class="mb-0">{{ number_format($todayLateCount ?? 0) }}</h3>
+                        </div>
+                    </div>
+                    <p class="mb-0 text-muted">Pegawai terlambat hari ini.</p>
+                </div>
+            </div>
+        </div>
         </div>
     </div>
 
