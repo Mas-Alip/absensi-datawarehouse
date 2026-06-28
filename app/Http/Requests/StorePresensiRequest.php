@@ -26,6 +26,9 @@ class StorePresensiRequest extends FormRequest
             ],
             'keterangan' => 'required_if:jenis_presensi,izin,sakit|max:1000',
             'bukti_file' => 'required_if:jenis_presensi,izin,sakit|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'foto_selfie' => 'required_if:jenis_presensi,hadir|string',
+            'latitude' => 'required_if:jenis_presensi,hadir|numeric',
+            'longitude' => 'required_if:jenis_presensi,hadir|numeric',
         ];
     }
 }

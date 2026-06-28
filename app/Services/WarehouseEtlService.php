@@ -130,6 +130,7 @@ class WarehouseEtlService
                     'pegawai' => $pegawai,
                     'tanggal' => $record->tanggal->format('Y-m-d'),
                     'total_hadir' => 0,
+                    'total_smart_hadir' => 0,
                     'total_telat' => 0,
                     'total_izin' => 0,
                     'total_sakit' => 0,
@@ -142,6 +143,10 @@ class WarehouseEtlService
 
             if ($status === 'hadir') {
                 $factGroups[$key]['total_hadir']++;
+
+                if ($record->foto_selfie && $record->latitude && $record->longitude) {
+                    $factGroups[$key]['total_smart_hadir']++;
+                }
             }
             if ($status === 'izin') {
                 $factGroups[$key]['total_izin']++;
@@ -183,6 +188,7 @@ class WarehouseEtlService
                     'divisi_key' => $divisiKey,
                     'jabatan_key' => $jabatanKey,
                     'total_hadir' => $group['total_hadir'],
+                    'total_smart_hadir' => $group['total_smart_hadir'],
                     'total_telat' => $group['total_telat'],
                     'total_izin' => $group['total_izin'],
                     'total_sakit' => $group['total_sakit'],

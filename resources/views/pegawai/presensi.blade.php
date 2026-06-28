@@ -80,6 +80,24 @@
                         </div>
                     </div>
 
+                    @if($todayAttendance?->latitude && $todayAttendance?->longitude)
+                        <div class="mb-3">
+                            <span class="text-muted">Lokasi</span>
+                            <div class="fs-5 fw-semibold">
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ $todayAttendance->latitude }},{{ $todayAttendance->longitude }}" target="_blank" class="link-primary">Lihat Lokasi</a>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($todayAttendance?->foto_selfie)
+                        <div class="mb-3">
+                            <span class="text-muted">Selfie</span>
+                            <div class="fs-5 fw-semibold">
+                                <a href="{{ asset('storage/' . $todayAttendance->foto_selfie) }}" target="_blank" class="link-primary">Lihat Selfie</a>
+                            </div>
+                        </div>
+                    @endif
+
                     @if(!$todayAttendance)
                         <div class="mt-4">
                             <div class="d-grid gap-2">

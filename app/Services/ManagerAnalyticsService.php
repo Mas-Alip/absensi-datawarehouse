@@ -48,6 +48,7 @@ class ManagerAnalyticsService
         $summary = (clone $baseQuery)
             ->selectRaw(
                 'COALESCE(SUM(total_hadir), 0) as total_hadir,' .
+                'COALESCE(SUM(total_smart_hadir), 0) as total_smart_hadir,' .
                 'COALESCE(SUM(total_telat), 0) as total_telat,' .
                 'COALESCE(SUM(total_izin), 0) as total_izin,' .
                 'COALESCE(SUM(total_sakit), 0) as total_sakit,' .

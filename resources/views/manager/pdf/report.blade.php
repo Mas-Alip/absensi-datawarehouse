@@ -31,6 +31,7 @@
     <table class="summary-grid">
         <tr>
             <th>Total Hadir</th>
+            <th>Total Smart Hadir</th>
             <th>Total Telat</th>
             <th>Total Izin</th>
             <th>Total Sakit</th>
@@ -38,6 +39,7 @@
         </tr>
         <tr>
             <td>{{ number_format($summary->total_hadir) }}</td>
+            <td>{{ number_format($summary->total_smart_hadir) }}</td>
             <td>{{ number_format($summary->total_telat) }}</td>
             <td>{{ number_format($summary->total_izin) }}</td>
             <td>{{ number_format($summary->total_sakit) }}</td>

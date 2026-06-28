@@ -17,6 +17,7 @@ class FactAbsensi extends Model
         'jabatan_key',
         'waktu_key',
         'total_hadir',
+        'total_smart_hadir',
         'total_telat',
         'total_izin',
         'total_sakit',

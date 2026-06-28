@@ -9,6 +9,7 @@ use App\Http\Requests\StorePresensiRequest;
 use App\Models\Absensi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Carbon\Carbon;
 
@@ -62,9 +63,13 @@ class PresensiController extends Controller
         $validated = $request->validated();
         $jenisPresensi = AttendanceStatus::from($validated['jenis_presensi']);
         $buktiPath = null;
+        $fotoSelfiePath = null;
         $jamMasuk = null;
         $statusKeterlambatan = LateStatus::ON_TIME;
         $menitKeterlambatan = 0;
+        $latitude = $validated['latitude'] ?? null;
+        $longitude = $validated['longitude'] ?? null;
+        $alamat = null;
 
         if ($jenisPresensi === AttendanceStatus::IZIN || $jenisPresensi === AttendanceStatus::SAKIT) {
             if ($request->hasFile('bukti_file')) {
@@ -82,6 +87,11 @@ class PresensiController extends Controller
                 $menitKeterlambatan = 0;
                 $statusKeterlambatan = LateStatus::ON_TIME;
             }
+
+            $fotoSelfiePath = $this->saveSelfieFromBase64($validated['foto_selfie'] ?? null);
+            if ($latitude !== null && $longitude !== null) {
+                $alamat = $this->buildLocationLink($latitude, $longitude);
+            }
         }
 
         Absensi::create([
@@ -93,11 +103,38 @@ class PresensiController extends Controller
             'menit_terlambat' => $menitKeterlambatan,
             'keterangan' => $validated['keterangan'] ?? null,
             'bukti_file' => $buktiPath,
+            'foto_selfie' => $fotoSelfiePath,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'alamat' => $alamat,
         ]);
 
         return redirect()->route('pegawai.presensi')->with('success', 'Presensi ' . $jenisPresensi->label() . ' berhasil dicatat.');
     }
 
+    private function saveSelfieFromBase64(?string $dataUrl): ?string
+    {
+        if (! $dataUrl || ! str_contains($dataUrl, 'base64,')) {
+            return null;
+        }
+
+        [$meta, $encoded] = explode('base64,', $dataUrl, 2);
+        $decoded = base64_decode($encoded);
+        if ($decoded === false) {
+            return null;
+        }
+
+        $filename = 'selfie_' . now('Asia/Jakarta')->format('Ymd_His') . '_' . uniqid() . '.jpg';
+        $path = 'selfie-presensi/' . $filename;
+        Storage::disk('public')->put($path, $decoded);
+
+        return $path;
+    }
+
+    private function buildLocationLink(string $latitude, string $longitude): string
+    {
+        return sprintf('https://www.google.com/maps/search/?api=1&query=%s,%s', $latitude, $longitude);
+    }
 
     public function checkout(Request $request): RedirectResponse
     {

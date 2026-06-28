@@ -124,7 +124,7 @@
             </div>
         </div>
         <div class="col-sm-6 col-xl-2">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-info rounded-4 h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-3">
                         <span class="badge bg-info rounded-circle p-3 me-3">
@@ -136,6 +136,22 @@
                         </div>
                     </div>
                     <p class="mb-0 text-muted">Statistik sakit diambil dari warehouse.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-2">
+            <div class="card border-success rounded-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-success rounded-circle p-3 me-3">
+                            <i class="bi bi-camera-fill fs-4"></i>
+                        </span>
+                        <div>
+                            <h6 class="mb-1 text-uppercase text-muted">Total Smart Hadir</h6>
+                            <h3 class="mb-0">{{ number_format($summary->total_smart_hadir) }}</h3>
+                        </div>
+                    </div>
+                    <p class="mb-0 text-muted">Hadir lengkap dengan selfie dan GPS.</p>
                 </div>
             </div>
         </div>
