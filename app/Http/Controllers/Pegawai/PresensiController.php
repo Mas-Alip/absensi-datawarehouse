@@ -9,8 +9,6 @@ use App\Http\Requests\StorePresensiRequest;
 use App\Models\Absensi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Carbon\Carbon;
 
@@ -38,6 +36,7 @@ class PresensiController extends Controller
         return view('pegawai.presensi', [
             'pegawai' => $pegawai,
             'todayAttendance' => $todayAttendance,
+            'statusToday' => $todayAttendance ? $todayAttendance->status_kehadiran : null,
             'history' => $history,
             'today' => Carbon::parse($today),
         ]);
@@ -63,173 +62,27 @@ class PresensiController extends Controller
 
         $validated = $request->validated();
         $jenisPresensi = AttendanceStatus::from($validated['jenis_presensi']);
-        $buktiPath = null;
-        $fotoSelfiePath = null;
-        $jamMasuk = null;
+        $jamMasuk = now('Asia/Jakarta');
         $statusKeterlambatan = LateStatus::ON_TIME;
         $menitKeterlambatan = 0;
-        $latitude = $validated['latitude'] ?? null;
-        $longitude = $validated['longitude'] ?? null;
-        $alamat = null;
 
-        if ($jenisPresensi === AttendanceStatus::IZIN || $jenisPresensi === AttendanceStatus::SAKIT) {
-            if ($request->hasFile('bukti_file')) {
-                $buktiPath = $request->file('bukti_file')->store('bukti-presensi', 'public');
-            }
-        }
-
-        if ($jenisPresensi === AttendanceStatus::HADIR) {
-            $jamMasuk = now('Asia/Jakarta');
-            $cutoff = $jamMasuk->copy()->setTime(8, 0, 0);
-            if ($jamMasuk->greaterThan($cutoff)) {
-                $menitKeterlambatan = $jamMasuk->diffInMinutes($cutoff);
-                $statusKeterlambatan = LateStatus::LATE;
-            } else {
-                $menitKeterlambatan = 0;
-                $statusKeterlambatan = LateStatus::ON_TIME;
-            }
-
-            Log::info('Presensi hadir: mulai proses upload selfie', [
-                'pegawai_id' => $pegawai->id,
-                'today' => $today,
-                'foto_selfie_present' => isset($validated['foto_selfie']),
-                'foto_selfie_length' => isset($validated['foto_selfie']) ? strlen($validated['foto_selfie']) : 0,
-            ]);
-
-            $fotoSelfiePath = $this->saveSelfieFromBase64($validated['foto_selfie'] ?? null);
-            if (! $fotoSelfiePath) {
-                Log::error('Presensi hadir gagal: file selfie tidak tersimpan', [
-                    'pegawai_id' => $pegawai->id,
-                    'today' => $today,
-                    'latitude' => $latitude,
-                    'longitude' => $longitude,
-                ]);
-                return redirect()->route('pegawai.presensi')->with('error', 'Gagal menyimpan foto selfie. Silakan ulangi presensi.');
-            }
-
-            if ($latitude !== null && $longitude !== null) {
-                $alamat = $this->buildLocationLink($latitude, $longitude);
-            }
+        $cutoff = $jamMasuk->copy()->setTime(8, 0, 0);
+        if ($jamMasuk->greaterThan($cutoff)) {
+            $menitKeterlambatan = $jamMasuk->diffInMinutes($cutoff);
+            $statusKeterlambatan = LateStatus::LATE;
         }
 
         Absensi::create([
             'pegawai_id' => $pegawai->id,
             'tanggal' => $today,
-            'jam_masuk' => $jamMasuk?->toTimeString(),
-            'status_kehadiran' => $jenisPresensi,
+            'jam_masuk' => $jamMasuk->toTimeString(),
+            'status_kehadiran' => AttendanceStatus::HADIR,
             'status_keterlambatan' => $statusKeterlambatan,
             'menit_terlambat' => $menitKeterlambatan,
-            'keterangan' => $validated['keterangan'] ?? null,
-            'bukti_file' => $buktiPath,
-            'foto_selfie' => $fotoSelfiePath,
-            'latitude' => $latitude,
-            'longitude' => $longitude,
-            'alamat' => $alamat,
+            'keterangan' => null,
         ]);
 
-        return redirect()->route('pegawai.presensi')->with('success', 'Presensi ' . $jenisPresensi->label() . ' berhasil dicatat.');
-    }
-
-    private function saveSelfieFromBase64(?string $dataUrl): ?string
-    {
-        Log::info('saveSelfieFromBase64 called', [
-            'data_url_present' => ! empty($dataUrl),
-            'data_url_type' => is_string($dataUrl) ? gettype($dataUrl) : null,
-        ]);
-
-        if (! $dataUrl || ! str_contains($dataUrl, 'base64,')) {
-            Log::warning('saveSelfieFromBase64 invalid payload', [
-                'data_url' => $dataUrl,
-            ]);
-            return null;
-        }
-
-        [$meta, $encoded] = explode('base64,', $dataUrl, 2);
-        $encodedLength = strlen($encoded);
-        Log::info('saveSelfieFromBase64 parsed base64', [
-            'meta' => $meta,
-            'encoded_length' => $encodedLength,
-        ]);
-
-        $decoded = base64_decode($encoded, true);
-        if ($decoded === false) {
-            Log::error('saveSelfieFromBase64 base64_decode failed', [
-                'meta' => $meta,
-                'encoded_length' => $encodedLength,
-            ]);
-            return null;
-        }
-
-        $decodedSize = strlen($decoded);
-        Log::info('saveSelfieFromBase64 decoded file', [
-            'decoded_size' => $decodedSize,
-        ]);
-
-        $filename = 'selfie_' . now('Asia/Jakarta')->format('Ymd_His') . '_' . uniqid() . '.jpg';
-        $path = 'selfie-presensi/' . $filename;
-        $disk = Storage::disk('public');
-        $rootPath = $disk->path('');
-
-        $created = $disk->makeDirectory('selfie-presensi', 0755, true);
-        Log::info('saveSelfieFromBase64 ensured directory exists', [
-            'directory' => 'selfie-presensi',
-            'created' => $created,
-            'disk_root' => $rootPath,
-        ]);
-
-        $stored = false;
-        try {
-            $stored = $disk->put($path, $decoded);
-        } catch (\Throwable $e) {
-            Log::error('saveSelfieFromBase64 put exception', [
-                'path' => $path,
-                'exception' => $e->getMessage(),
-                'exception_file' => $e->getFile(),
-                'exception_line' => $e->getLine(),
-            ]);
-        }
-
-        if (! $stored) {
-            $absolutePath = rtrim($rootPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $path;
-            $folder = dirname($absolutePath);
-            if (! is_dir($folder)) {
-                mkdir($folder, 0755, true);
-            }
-            $stored = file_put_contents($absolutePath, $decoded) !== false;
-            if ($stored) {
-                $disk->setVisibility($path, 'public');
-            }
-            Log::warning('saveSelfieFromBase64 fallback native write', [
-                'path' => $path,
-                'absolute_path' => $absolutePath,
-                'stored' => $stored,
-            ]);
-        }
-
-        $exists = $disk->exists($path);
-        $absolutePath = $disk->path($path);
-        Log::info('saveSelfieFromBase64 storage exists check', [
-            'path' => $path,
-            'exists' => $exists,
-            'absolute_path' => $absolutePath,
-        ]);
-
-        if (! $stored || ! $exists) {
-            Log::error('saveSelfieFromBase64 upload verification failed', [
-                'path' => $path,
-                'stored' => $stored,
-                'exists' => $exists,
-                'absolute_path' => $absolutePath,
-            ]);
-            return null;
-        }
-
-        return $path;
-    }
-
-    private function buildLocationLink(string $latitude, string $longitude): string
-    {
-        return sprintf('https://www.google.com/maps/search/?api=1&query=%s,%s', $latitude, $longitude);
+        return redirect()->route('pegawai.presensi')->with('success', 'Presensi Hadir berhasil dicatat.');
     }
 
     public function checkout(Request $request): RedirectResponse
