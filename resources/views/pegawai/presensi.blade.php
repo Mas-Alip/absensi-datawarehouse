@@ -202,7 +202,7 @@
                                 </div>
                                 <h5 class="card-title">Presensi Izin</h5>
                                 <p class="card-text text-muted">Ajukan izin dengan keterangan dan bukti pendukung.</p>
-                                <button id="toggleIzinBtn" class="btn btn-outline-info w-100 mt-auto" type="button" data-bs-toggle="collapse" data-bs-target="#izinForm">Pilih Izin</button>
+                                <button id="toggleIzinBtn" class="btn btn-outline-info w-100 mt-auto" type="button">Pilih Izin</button>
                             </div>
                         </div>
                     </div>
@@ -214,7 +214,7 @@
                                 </div>
                                 <h5 class="card-title">Presensi Sakit</h5>
                                 <p class="card-text text-muted">Laporkan sakit dengan keterangan dan bukti medis.</p>
-                                <button id="toggleSakitBtn" class="btn btn-outline-warning w-100 mt-auto" type="button" data-bs-toggle="collapse" data-bs-target="#sakitForm">Pilih Sakit</button>
+                                <button id="toggleSakitBtn" class="btn btn-outline-warning w-100 mt-auto" type="button">Pilih Sakit</button>
                             </div>
                         </div>
                     </div>
@@ -596,72 +596,84 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Bootstrap Collapse Setup for Izin and Sakit Forms
-    // With data-bs-toggle and data-bs-target attributes on buttons, this serves as a fallback
+    // ===== BULLETPROOF COLLAPSE HANDLER FOR IZIN/SAKIT FORMS =====
+    // Direct Bootstrap Collapse implementation - no ambiguity
+    
     const toggleIzinBtn = document.getElementById('toggleIzinBtn');
     const toggleSakitBtn = document.getElementById('toggleSakitBtn');
-    const izinEl = document.getElementById('izinForm');
-    const sakitEl = document.getElementById('sakitForm');
+    const izinForm = document.getElementById('izinForm');
+    const sakitForm = document.getElementById('sakitForm');
 
-    // Initialize Bootstrap Collapse instances
+    // Create collapse instances that we control
     let izinCollapse = null;
     let sakitCollapse = null;
 
-    try {
-        if (typeof bootstrap !== 'undefined') {
-            // Create instances without toggling initially
-            if (izinEl) {
-                izinCollapse = bootstrap.Collapse.getOrCreateInstance(izinEl, { toggle: false });
-            }
-            if (sakitEl) {
-                sakitCollapse = bootstrap.Collapse.getOrCreateInstance(sakitEl, { toggle: false });
-            }
+    if (typeof bootstrap !== 'undefined' && izinForm) {
+        izinCollapse = new bootstrap.Collapse(izinForm, { toggle: false });
+    }
+    if (typeof bootstrap !== 'undefined' && sakitForm) {
+        sakitCollapse = new bootstrap.Collapse(sakitForm, { toggle: false });
+    }
 
-            // Add additional safety: prevent form from closing when clicking inside it
-            if (izinEl) {
-                izinEl.addEventListener('click', function (e) {
-                    // Allow click events to propagate normally within the form
-                    // Don't prevent default or stop propagation
-                });
-            }
+    // ===== BUTTON CLICK HANDLERS - THESE TAKE PRIORITY =====
+    if (toggleIzinBtn && izinCollapse) {
+        toggleIzinBtn.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            console.log('[Presensi] Izin button clicked - toggling collapse');
+            izinCollapse.toggle();
+        });
+        // Remove Bootstrap's default data-bs-toggle to prevent conflicts
+        toggleIzinBtn.removeAttribute('data-bs-toggle');
+        toggleIzinBtn.removeAttribute('data-bs-target');
+    }
 
-            if (sakitEl) {
-                sakitEl.addEventListener('click', function (e) {
-                    // Allow click events to propagate normally within the form
-                    // Don't prevent default or stop propagation
-                });
-            }
+    if (toggleSakitBtn && sakitCollapse) {
+        toggleSakitBtn.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            console.log('[Presensi] Sakit button clicked - toggling collapse');
+            sakitCollapse.toggle();
+        });
+        // Remove Bootstrap's default data-bs-toggle to prevent conflicts
+        toggleSakitBtn.removeAttribute('data-bs-toggle');
+        toggleSakitBtn.removeAttribute('data-bs-target');
+    }
 
-            // Ensure forms stay open when submitting
-            const forms = document.querySelectorAll('[name="jenis_presensi"]');
-            forms.forEach(input => {
-                const form = input.closest('form');
-                if (form) {
-                    form.addEventListener('submit', function (e) {
-                        // Allow form to submit naturally
-                        // Do NOT prevent default submission
-                    });
-                }
+    // ===== PREVENT FORM ELEMENTS FROM CLOSING COLLAPSE =====
+    // Stop propagation on form elements so clicking them doesn't close the collapse
+    if (izinForm) {
+        izinForm.addEventListener('click', function (event) {
+            // Let all form interactions propagate normally
+            // Don't interfere with the natural event flow
+        });
+
+        // Prevent form submission from closing the collapse
+        const izinFormElement = izinForm.querySelector('form');
+        if (izinFormElement) {
+            izinFormElement.addEventListener('submit', function (event) {
+                // Form submits normally - no interference needed
+                console.log('[Presensi] Izin form submitted');
             });
-
-            console.log('[Presensi] Bootstrap collapse initialized successfully');
         }
-    } catch (err) {
-        console.warn('[Presensi] Collapse init warning:', err);
     }
 
-    // Log when user interacts with collapse buttons
-    if (toggleIzinBtn) {
-        toggleIzinBtn.addEventListener('click', function () {
-            console.log('[Presensi] Toggle Izin button clicked');
+    if (sakitForm) {
+        sakitForm.addEventListener('click', function (event) {
+            // Let all form interactions propagate normally
         });
+
+        // Prevent form submission from closing the collapse
+        const sakitFormElement = sakitForm.querySelector('form');
+        if (sakitFormElement) {
+            sakitFormElement.addEventListener('submit', function (event) {
+                // Form submits normally - no interference needed
+                console.log('[Presensi] Sakit form submitted');
+            });
+        }
     }
 
-    if (toggleSakitBtn) {
-        toggleSakitBtn.addEventListener('click', function () {
-            console.log('[Presensi] Toggle Sakit button clicked');
-        });
-    }
+    console.log('[Presensi] Collapse handlers initialized - Izin:', !!izinCollapse, ', Sakit:', !!sakitCollapse);
 
 
     window.addEventListener('beforeunload', stopCamera);
