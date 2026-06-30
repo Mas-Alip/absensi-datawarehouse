@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\LateStatus;
 use App\Models\Absensi;
 use App\Models\FactAbsensi;
+use App\Models\Pegawai;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -101,18 +102,32 @@ class ManagerAnalyticsService
         $todayPresentCount = Absensi::whereDate('tanggal', $today)->count();
         $todayLateCount = Absensi::whereDate('tanggal', $today)->where('status_keterlambatan', LateStatus::LATE->value)->count();
 
-        // Recent presensi details for manager view (within the requested range)
-        $recentPresensi = Absensi::with('pegawai')
-            ->whereBetween('tanggal', $dateRange)
-            ->orderByDesc('tanggal')
-            ->limit(10)
+        $totalMasterPegawai = Pegawai::count();
+        $notPresentToday = Pegawai::whereDoesntHave('absensi', function ($query) use ($today) {
+                $query->whereDate('tanggal', $today);
+            })
+            ->with(['divisi', 'jabatan'])
+            ->orderBy('nama')
             ->get();
+
+        $presentToday = Absensi::with(['pegawai.divisi', 'pegawai.jabatan'])
+            ->whereDate('tanggal', $today)
+            ->orderBy('jam_masuk')
+            ->get();
+
+        $attendancePercentageToday = $totalMasterPegawai > 0
+            ? round(($todayPresentCount / $totalMasterPegawai) * 100, 2)
+            : 0;
 
         return [
             'summary' => $summary,
             'todayPresentCount' => $todayPresentCount,
             'todayLateCount' => $todayLateCount,
             'totalPegawai' => $totalPegawai,
+            'totalMasterPegawai' => $totalMasterPegawai,
+            'notPresentToday' => $notPresentToday,
+            'presentToday' => $presentToday,
+            'attendancePercentageToday' => $attendancePercentageToday,
             'totalDivisi' => $totalDivisi,
             'totalJabatan' => $totalJabatan,
             'totalDataAbsensi' => $totalDataAbsensi,
@@ -123,7 +138,6 @@ class ManagerAnalyticsService
             'factTotalRecords' => $totalDataAbsensi,
             'distinctDates' => (clone $baseQuery)->distinct()->count('dim_waktu.tanggal'),
             'lateSummary' => $lateSummary,
-            'recentPresensi' => $recentPresensi,
         ];
     }
 

@@ -43,6 +43,9 @@
                 <a class="nav-link rounded-3 mb-1 px-3 py-2 {{ request()->routeIs('pegawai.presensi') ? 'active' : 'text-white-75' }}" href="{{ route('pegawai.presensi') }}">
                     <i class="bi bi-clock-history me-2"></i> Presensi Saya
                 </a>
+                <a class="nav-link rounded-3 mb-1 px-3 py-2 {{ request()->routeIs('pegawai.administrasi-alpha*') ? 'active' : 'text-white-75' }}" href="{{ route('pegawai.administrasi-alpha') }}">
+                    <i class="bi bi-file-earmark-richtext me-2"></i> Administrasi Alpha
+                </a>
             @endif
 
             @if(Route::has('laporan.index'))
@@ -125,6 +128,12 @@
                     @if(Route::has('laporan.index'))
                         <a class="nav-link rounded-3 mb-1 px-3 py-2 {{ request()->routeIs('laporan.*') ? 'active' : 'text-white-75' }}" href="{{ route('laporan.index') }}">
                             <i class="bi bi-file-earmark-text me-2"></i> Laporan
+                        </a>
+                    @endif
+
+                    @if(auth()->user()->isPegawai())
+                        <a class="nav-link rounded-3 mb-1 px-3 py-2 {{ request()->routeIs('pegawai.administrasi-alpha*') ? 'active' : 'text-white-75' }}" href="{{ route('pegawai.administrasi-alpha') }}">
+                            <i class="bi bi-file-earmark-richtext me-2"></i> Administrasi Alpha
                         </a>
                     @endif
 

@@ -20,7 +20,7 @@ class AbsensiController extends Controller
         $status = request('status');
         $sort = request('sort', 'newest');
 
-        $absensi = Absensi::with('pegawai')
+        $absensi = Absensi::with(['pegawai.divisi', 'pegawai.jabatan'])
             ->when($search, function ($query, $search) {
                 $query->whereHas('pegawai', function ($query) use ($search) {
                     $query->where('nama', 'like', "%{$search}%")

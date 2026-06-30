@@ -12,6 +12,7 @@ use App\Http\Controllers\Manager\DashboardController as ManagerDashboardControll
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\Pegawai\DashboardController as PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\PresensiController as PegawaiPresensiController;
+use App\Http\Controllers\Pegawai\AdministrasiAlphaController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\ManagerMiddleware;
 use App\Http\Middleware\PegawaiMiddleware;
@@ -76,6 +77,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pegawai/presensi', [PegawaiPresensiController::class, 'index'])
         ->middleware(PegawaiMiddleware::class)
         ->name('pegawai.presensi');
+
+    Route::get('/pegawai/administrasi-alpha', [AdministrasiAlphaController::class, 'index'])
+        ->middleware(PegawaiMiddleware::class)
+        ->name('pegawai.administrasi-alpha');
+
+    Route::get('/pegawai/administrasi-alpha/pdf', [AdministrasiAlphaController::class, 'downloadPdf'])
+        ->middleware(PegawaiMiddleware::class)
+        ->name('pegawai.administrasi-alpha.pdf');
 
     Route::post('/pegawai/presensi/checkin', [PegawaiPresensiController::class, 'checkin'])
         ->middleware([PegawaiMiddleware::class])
