@@ -17,6 +17,45 @@
                         Sistem role sudah diaktifkan. Halaman ini hanya dapat diakses oleh Admin.
                     </div>
 
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm rounded-4 bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="card-title mb-0">Status Sistem</h5>
+                                        <span class="badge bg-success">Online</span>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <div class="border rounded-3 p-3 h-100">
+                                                <div class="small text-muted">Status Server</div>
+                                                <div class="fw-semibold"><i class="bi bi-hdd-network me-2 text-success"></i>Aktif</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="border rounded-3 p-3 h-100">
+                                                <div class="small text-muted">Status Database</div>
+                                                <div class="fw-semibold"><i class="bi bi-database-check me-2 text-success"></i>Siap</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="border rounded-3 p-3 h-100">
+                                                <div class="small text-muted">Status ETL</div>
+                                                <div class="fw-semibold"><i class="bi bi-arrow-repeat me-2 text-warning"></i>Siap</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="border rounded-3 p-3 h-100">
+                                                <div class="small text-muted">Mode Aplikasi</div>
+                                                <div class="fw-semibold"><i class="bi bi-router me-2 text-primary"></i>{{ env('APP_MODE', 'INTRANET') }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <div class="card border-primary h-100">
@@ -63,6 +102,15 @@
                                         @csrf
                                         <button class="btn btn-warning">Jalankan ETL</button>
                                     </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-dark h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Informasi Sistem</h5>
+                                    <p class="card-text">Lihat detail identitas sistem, mode intranet, dan status implementasi lokal.</p>
+                                    <a href="{{ route('admin.informasi-sistem') }}" class="btn btn-dark">Buka Informasi Sistem</a>
                                 </div>
                             </div>
                         </div>

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\JabatanController;
 use App\Http\Controllers\Admin\PegawaiController;
 use App\Http\Controllers\Admin\AbsensiController;
 use App\Http\Controllers\Admin\EtlController;
+use App\Http\Controllers\Admin\SystemInfoController;
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboardController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\Pegawai\DashboardController as PegawaiDashboardController;
@@ -42,6 +43,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])
         ->middleware(AdminMiddleware::class)
         ->name('admin.dashboard');
+
+    Route::get('/admin/informasi-sistem', [SystemInfoController::class, 'index'])
+        ->middleware(AdminMiddleware::class)
+        ->name('admin.informasi-sistem');
 
     // Admin-only user creation (show register with role selection)
     Route::get('/admin/users/create', [AdminUserController::class, 'create'])

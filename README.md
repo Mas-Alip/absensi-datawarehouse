@@ -11,6 +11,25 @@
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
+## HRIS Intranet Notes
+
+This application is prepared as an internal HRIS for office use and is intended to run on a local server inside the company network.
+
+- The system is intended to be hosted on a local office server.
+- Employees access it through the office WiFi or LAN.
+- The application is not intended for public internet access.
+- Attendance is processed through the internal intranet network.
+
+Suggested environment variables for local intranet deployment:
+
+```env
+APP_MODE=INTRANET
+APP_NETWORK=LOCAL
+APP_URL=http://hris.local
+```
+
+The application is also ready to be used with local hostnames such as hris.local or presensi.local during the next deployment stage.
+
 - [Simple, fast routing engine](https://laravel.com/docs/routing).
 - [Powerful dependency injection container](https://laravel.com/docs/container).
 - Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
